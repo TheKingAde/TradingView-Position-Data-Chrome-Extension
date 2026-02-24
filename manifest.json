@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "TradingView Trade Sender",
+  "name": "TradingView Order Bridge",
   "version": "1.0",
-  "description": "Send TradingView price with trade data to external API",
+  "description": "Send Order data from TradingView to an external API",
   "permissions": [
     "storage",
     "activeTab",
