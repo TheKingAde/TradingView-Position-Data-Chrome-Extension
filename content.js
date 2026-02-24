@@ -1,63 +1,94 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
-    if (request.action === "getPriceAndSend") {
+    if (request.action !== "getPriceAndSend") return;
 
-        const { direction, sl, tp, url, method } = request.data;
+    (async () => {
+        try {
+            const { direction, sl, tp, url, method } = request.data;
 
-        // Attempt to extract current price from TradingView DOM
-        let priceElement = document.querySelector('[data-field="last"]');
+            function getButtonPrice(direction) {
+                const selector = direction === "buy"
+                    ? '[data-name="buy-order-button"] .buttonText-SXMXfs_Z'
+                    : '[data-name="sell-order-button"] .buttonText-SXMXfs_Z';
 
-        if (!priceElement) {
-            priceElement = document.querySelector('.lastPrice'); // fallback
-        }
+                let buttonPriceEl = document.querySelector(selector);
 
-        if (!priceElement) {
-            sendResponse({ status: "Price not found on chart." });
-            return;
-        }
+                // Fallback: if TradingView changes internal class names,
+                // try reading first span inside the button wrapper
+                if (!buttonPriceEl) {
+                    const wrapperSelector = direction === "buy"
+                        ? '[data-name="buy-order-button"]'
+                        : '[data-name="sell-order-button"]';
 
-        const currentPrice = priceElement.innerText.replace(',', '');
+                    const wrapper = document.querySelector(wrapperSelector);
 
-        const payload = {
-            symbol: document.title,
-            direction: direction,
-            stop_loss: sl,
-            take_profit: tp,
-            current_price: currentPrice,
-            timestamp: new Date().toISOString()
-        };
+                    if (wrapper) {
+                        const spans = wrapper.querySelectorAll("span");
+                        for (let span of spans) {
+                            const value = span.innerText.replace(/,/g, '');
+                            if (!isNaN(parseFloat(value))) {
+                                buttonPriceEl = span;
+                                break;
+                            }
+                        }
+                    }
+                }
 
-        if (method === "POST") {
-            fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.text())
-            .then(data => {
-                sendResponse({ status: "POST sent successfully" });
-            })
-            .catch(err => {
-                sendResponse({ status: "POST failed: " + err.message });
+                if (!buttonPriceEl) {
+                    throw new Error(`${direction.toUpperCase()} button price not found`);
+                }
+
+                return buttonPriceEl.innerText.replace(/,/g, '');
+            }
+
+            const currentPrice = getButtonPrice(direction);
+
+            const payload = {
+                symbol: document.title,
+                direction,
+                stop_loss: sl,
+                take_profit: tp,
+                current_price: currentPrice,
+                timestamp: new Date().toISOString()
+            };
+
+            let response;
+            let httpStatus;
+            let responseBody;
+
+            if (method === "POST") {
+                response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                const params = new URLSearchParams(payload).toString();
+                response = await fetch(`${url}?${params}`, { method: "GET" });
+            }
+
+            httpStatus = response.status;
+
+            try {
+                responseBody = await response.json();
+            } catch {
+                responseBody = await response.text();
+            }
+
+            sendResponse({
+                success: response.ok,
+                http_status: httpStatus,
+                server_response: responseBody,
+                payload: payload
             });
 
-        } else {
-
-            const params = new URLSearchParams(payload).toString();
-            fetch(`${url}?${params}`, {
-                method: "GET"
-            })
-            .then(res => res.text())
-            .then(data => {
-                sendResponse({ status: "GET sent successfully" });
-            })
-            .catch(err => {
-                sendResponse({ status: "GET failed: " + err.message });
+        } catch (error) {
+            sendResponse({
+                success: false,
+                error: error.message
             });
         }
+    })();
 
-        return true; // Required for async sendResponse
-    }
+    return true; // async
 });

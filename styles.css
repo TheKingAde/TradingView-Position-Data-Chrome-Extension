@@ -25,3 +25,15 @@ button {
     margin-top: 10px;
     font-size: 12px;
 }
+
+.debug-box {
+    background: #111;
+    color: #00ff88;
+    padding: 10px;
+    height: 180px;
+    overflow-y: auto;
+    font-size: 11px;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
