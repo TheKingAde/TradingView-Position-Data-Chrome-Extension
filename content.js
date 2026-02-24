@@ -4,7 +4,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     (async () => {
         try {
-            const { direction, sl, tp, url, method } = request.data;
+            const { action, tradingViewId, direction, sl, tp, url, method } = request.data;
 
             function getButtonPrice(direction) {
                 const selector = direction === "buy"
@@ -74,6 +74,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             const instrument = getInstrumentData();
 
             const payload = {
+                action: action,
+                tradingview_id: tradingViewId,
                 symbol: instrument.symbol,
                 exchange: instrument.exchange,
                 direction,

@@ -89,3 +89,48 @@ button {
 
     white-space: pre-wrap;
 }
+
+/* Make sure padding/border don’t break width */
+* {
+    box-sizing: border-box;
+}
+
+/* Row layout */
+.row {
+    display: flex;
+    gap: 10px;              /* space BETWEEN fields */
+    margin-bottom: 8px;
+}
+
+/* Each field container */
+.field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Inputs & selects */
+.field input,
+.field select {
+    width: 100%;
+    padding: 6px;
+}
+
+/* Make labels smaller for compact view */
+.field label {
+    font-size: 10px;
+    margin-bottom: 2px;
+}
+
+/* Buttons in one line */
+.button-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.button-row button {
+    flex: 1;
+    padding: 6px;
+    font-size: 11px;
+}
