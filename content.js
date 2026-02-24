@@ -1,3 +1,7 @@
+if (typeof chrome === "undefined" || !chrome.runtime) {
+    console.log("Extension context not available");
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action !== "getPriceAndSend") return;
