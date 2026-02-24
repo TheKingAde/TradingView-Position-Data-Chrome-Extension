@@ -6,6 +6,18 @@ function logDebug(data) {
     debugEl.scrollTop = debugEl.scrollHeight;
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+
+    chrome.storage.local.get(["last_api_url"], (result) => {
+
+        if (result.last_api_url) {
+            document.getElementById("url").value = result.last_api_url;
+        }
+
+    });
+
+});
+
 document.getElementById("sendTrade").addEventListener("click", async () => {
 
     debugEl.textContent = "";
@@ -13,9 +25,23 @@ document.getElementById("sendTrade").addEventListener("click", async () => {
 
     try {
         const direction = document.getElementById("direction").value;
-        const sl = document.getElementById("sl").value;
-        const tp = document.getElementById("tp").value;
+        const sl = parseFloat(document.getElementById("sl").value);
+        const tp = parseFloat(document.getElementById("tp").value);
         const url = document.getElementById("url").value;
+
+        
+        if (sl < 0) {
+            throw new Error("Stop loss must be a positive number");
+        }
+
+        if (tp < 0) {
+            throw new Error("Take profit must be a positive number");
+        }
+        
+        // Save API URL before sending trade
+        chrome.storage.local.set({
+            last_api_url: url
+        });
         const method = document.getElementById("method").value;
 
         if (!url) {

@@ -1,39 +1,91 @@
 body {
     font-family: Arial, sans-serif;
-    width: 300px;
-    padding: 10px;
+    width: 260px;   /* Smaller popup width */
+    padding: 8px;
+
+    background: linear-gradient(145deg, #070b14, #01030a);
+    color: #e6f1ff;
+
+    box-sizing: border-box;
 }
 
+/* Headings */
+h2, h3 {
+    font-size: 14px;
+    text-align: center;
+    color: #7cf0ff;
+    margin: 4px 0 8px 0;
+}
+
+/* Labels */
 label {
     display: block;
-    margin-top: 8px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #c9d6ff;
+}
+
+/* Inputs & Selects */
+input, select {
+    width: 100%;
+    padding: 5px;
+    margin-top: 3px;
+
+    font-size: 11px;
+
+    background: rgba(12, 18, 36, 0.9);
+    border: 1px solid rgba(124, 240, 255, 0.2);
+
+    color: #e6f1ff;
+
+    border-radius: 5px;
+    outline: none;
+}
+
+/* Focus effect */
+input:focus, select:focus {
+    border-color: #7cf0ff;
+    box-shadow: 0 0 4px rgba(124, 240, 255, 0.25);
+}
+
+/* Button */
+button {
+    margin-top: 10px;
+    width: 100%;
+    padding: 6px;
+
+    font-size: 12px;
+
+    cursor: pointer;
+
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    color: white;
+
+    border: none;
+    border-radius: 6px;
+
     font-weight: bold;
 }
 
-input, select, button {
-    width: 100%;
-    padding: 5px;
-    margin-top: 4px;
-}
-
-button {
-    margin-top: 12px;
-    cursor: pointer;
-}
-
+/* Status */
 #status {
-    margin-top: 10px;
-    font-size: 12px;
+    margin-top: 8px;
+    font-size: 10px;
+    text-align: center;
 }
 
+/* Debug box */
 .debug-box {
-    background: #111;
-    color: #00ff88;
-    padding: 10px;
-    height: 180px;
+    margin-top: 8px;
+    height: 120px;
+    font-size: 10px;
+    padding: 6px;
+
+    background: rgba(5, 10, 20, 0.9);
+    border: 1px solid rgba(124, 240, 255, 0.15);
+
     overflow-y: auto;
-    font-size: 11px;
     border-radius: 6px;
+
     white-space: pre-wrap;
-    word-break: break-word;
 }

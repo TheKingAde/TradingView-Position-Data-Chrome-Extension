@@ -4,6 +4,7 @@
   "version": "1.0",
   "description": "Send TradingView price with trade data to external API",
   "permissions": [
+    "storage",
     "activeTab",
     "scripting"
   ],
