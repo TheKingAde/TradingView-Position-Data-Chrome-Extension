@@ -42,9 +42,40 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
 
             const currentPrice = getButtonPrice(direction);
+            
+            function getInstrumentData() {
+                const symbolBtn = document.querySelector(
+                    '[data-qa-id="title-wrapper legend-source-title"] button'
+                );
+
+                const rawSymbol = symbolBtn
+                    ? symbolBtn.innerText.trim()
+                    : null;
+
+                // EXCHANGE
+                const exchangeEl = document.querySelector(
+                    '[data-qa-id="title-wrapper legend-source-exchange"] .title-l31H9iuA'
+                );
+
+                const exchange = exchangeEl
+                    ? exchangeEl.innerText.trim()
+                    : null;
+
+                if (!rawSymbol) {
+                    throw new Error("Symbol not found in legend header");
+                }
+
+                return {
+                    symbol: rawSymbol,
+                    exchange: exchange
+                };
+            }
+
+            const instrument = getInstrumentData();
 
             const payload = {
-                symbol: document.title,
+                symbol: instrument.symbol,
+                exchange: instrument.exchange,
                 direction,
                 stop_loss: sl,
                 take_profit: tp,
