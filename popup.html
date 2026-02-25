@@ -6,53 +6,30 @@
 </head>
 <body>
     <h2>TradingView Order Bridge</h2>
-
-    <div class="row">
-        <div class="field">
-            <label>TradingView ID</label>
-            <input type="text" id="tradingViewId" placeholder="Enter TradingView ID" />
-        </div>
-
-        <div class="field">
-            <label>Direction</label>
-            <select id="direction">
-                <option value="buy">Buy</option>
-                <option value="sell">Sell</option>
-            </select>
-        </div>
+    <div id="currentSymbol" class="current-symbol">
+        Loading symbol...
+    </div>
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" data-tab="add">Add</button>
+        <button class="tab" data-tab="edit">Edit</button>
+        <button class="tab" data-tab="delete">Delete</button>
     </div>
 
-    <div class="row">
-        <div class="field">
-            <label>Stop Loss</label>
-            <input type="number" id="sl" step="0.00001" />
-        </div>
-
-        <div class="field">
-            <label>Take Profit</label>
-            <input type="number" id="tp" step="0.00001" />
-        </div>
+    <!-- Tab Content -->
+    <div class="tab-content active" id="add">
+        <div class="form-fields"></div>
+        <button id="addTrade">Add Trade</button>
     </div>
 
-    <div class="row">
-        <div class="field">
-            <label>API URL</label>
-            <input type="text" id="url" placeholder="https://example.com/api" />
-        </div>
-
-        <div class="field">
-            <label>Request Type</label>
-            <select id="method">
-                <option value="POST">POST</option>
-                <option value="GET">GET</option>
-            </select>
-        </div>
+    <div class="tab-content" id="edit">
+        <div class="form-fields"></div>
+        <button id="editTrade">Edit Trade</button>
     </div>
 
-    <div class="button-row">
-        <button id="addTrade">Add New Trade</button>
-        <button id="editTrade">Edit Last Trade</button>
-        <button id="deleteTrade">Delete Last Trade</button>
+    <div class="tab-content" id="delete">
+        <div class="form-fields"></div>
+        <button id="deleteTrade">Delete Trade</button>
     </div>
 
     <div id="status"></div>

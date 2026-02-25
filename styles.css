@@ -134,3 +134,47 @@ button {
     padding: 6px;
     font-size: 11px;
 }
+
+/* Tabs container */
+.tabs {
+    display: flex;
+    margin-bottom: 10px;
+    gap: 4px;
+}
+
+/* Tab buttons */
+.tab {
+    flex: 1;
+    padding: 6px;
+    background: rgba(12,18,36,0.9);
+    border: 1px solid rgba(124,240,255,0.2);
+    color: #e6f1ff;
+    cursor: pointer;
+    font-size: 11px;
+    border-radius: 4px;
+}
+
+/* Active tab */
+.tab.active {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    color: white;
+}
+
+/* Tab content hidden */
+.tab-content {
+    display: none;
+}
+
+/* Active tab content */
+.tab-content.active {
+    display: block;
+}
+
+.current-symbol {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 6px 0 12px 0;
+    color: #7cf0ff;
+    letter-spacing: 0.5px;
+}

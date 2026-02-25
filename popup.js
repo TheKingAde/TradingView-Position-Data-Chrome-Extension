@@ -1,3 +1,90 @@
+injectForms();
+
+const formTemplate = `
+<div class="row">
+    <div class="field">
+        <label>TradingView ID</label>
+        <input type="text" id="tradingViewId" placeholder="Enter TradingView ID" />
+    </div>
+
+    <div class="field">
+        <label>Direction</label>
+        <select id="direction">
+            <option value="buy">Buy</option>
+            <option value="sell">Sell</option>
+        </select>
+    </div>
+</div>
+
+<div class="row">
+    <div class="field">
+        <label>Stop Loss</label>
+        <input type="number" id="sl" step="0.00001" />
+    </div>
+
+    <div class="field">
+        <label>Take Profit</label>
+        <input type="number" id="tp" step="0.00001" />
+    </div>
+</div>
+
+<div class="row">
+    <div class="field">
+        <label>Entry Level</label>
+        <input type="number" id="entry"/>
+    </div>
+</div>
+`;
+/*
+<div class="row">
+    <div class="field">
+        <label>API URL</label>
+        <input type="text" id="url" placeholder="https://example.com/api" />
+    </div>
+
+    <div class="field">
+        <label>Request Type</label>
+        <select id="method">
+            <option value="POST">POST</option>
+            <option value="GET">GET</option>
+        </select>
+    </div>
+</div>
+*/
+
+function injectForms() {
+    document.querySelectorAll(".form-fields").forEach(el => {
+        el.innerHTML = formTemplate;
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    chrome.storage.local.get(["last_tv_id"], (result) => {
+        if (result.last_tv_id) {
+            document.getElementById("tradingViewId").value = result.last_tv_id;
+        }
+    });
+
+});
+
+document.querySelectorAll(".form-fields").forEach(el => {
+    el.innerHTML = formTemplate;
+});
+
+document.querySelectorAll(".tab").forEach(button => {
+    button.addEventListener("click", () => {
+
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+        button.classList.add("active");
+        document.getElementById(button.dataset.tab).classList.add("active");
+
+        loadTabDefaults(button.dataset.tab);
+    });
+});
+
 const statusEl = document.getElementById("status");
 const debugEl = document.getElementById("debug");
 
@@ -9,21 +96,70 @@ function logDebug(text) {
     debugEl.scrollTop = debugEl.scrollHeight;
 }
 
-/* -----------------------------
-   Load Stored Values
------------------------------ */
-document.addEventListener("DOMContentLoaded", () => {
+function loadTabDefaults(tabName) {
 
-    chrome.storage.local.get(["last_api_url", "last_tv_id"], (result) => {
+    if (tabName === "add") {
+        chrome.storage.local.get(["last_tv_id"], (result) => {
 
-        if (result.last_api_url)
-            document.getElementById("url").value = result.last_api_url;
+            document.getElementById("tradingViewId").value =
+                result.last_tv_id || "";
 
-        if (result.last_tv_id)
-            document.getElementById("tradingViewId").value = result.last_tv_id;
+            document.getElementById("direction").value = "buy";
+            document.getElementById("sl").value = "";
+            document.getElementById("tp").value = "";
+            document.getElementById("entry").value = "";
+        });
+    }
 
-    });
+    if (tabName === "edit" || tabName === "delete") {
+        chrome.storage.local.get(["last_trade"], (result) => {
 
+            if (!result.last_trade) return;
+
+            const trade = result.last_trade;
+
+            document.getElementById("tradingViewId").value =
+                trade.tradingViewId || "";
+
+            document.getElementById("direction").value =
+                trade.direction || "buy";
+
+            document.getElementById("sl").value =
+                trade.sl ?? "";
+
+            document.getElementById("tp").value =
+                trade.tp ?? "";
+
+            document.getElementById("entry").value =
+                trade.entry || "";
+        });
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+    const symbolEl = document.getElementById("currentSymbol");
+
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab) {
+        symbolEl.textContent = "No active tab";
+        return;
+    }
+
+    chrome.tabs.sendMessage(
+        tab.id,
+        { action: "getSymbol" },
+        (response) => {
+
+            if (chrome.runtime.lastError || !response || !response.success) {
+                symbolEl.textContent = "Symbol unavailable";
+                return;
+            }
+
+            symbolEl.textContent = `${response.symbol} (${response.exchange || ""})`;
+        }
+    );
 });
 
 /* -----------------------------
@@ -40,16 +176,18 @@ async function handleTrade(actionType) {
         const direction = document.getElementById("direction").value;
         const sl = parseFloat(document.getElementById("sl").value);
         const tp = parseFloat(document.getElementById("tp").value);
-        const url = document.getElementById("url").value;
-        const method = document.getElementById("method").value;
+        const url = "http://127.0.0.1:5000/trade";
+        const method = "POST";
 
         /* Validation */
         if (!tradingViewId)
             throw new Error("TradingView ID is required");
 
+        /*
         if (!url)
             throw new Error("API URL is required");
-
+        */
+       
         if (sl < 0)
             throw new Error("Stop loss must be positive");
 
@@ -58,8 +196,14 @@ async function handleTrade(actionType) {
 
         /* Save state */
         chrome.storage.local.set({
-            last_api_url: url,
-            last_tv_id: tradingViewId
+            last_tv_id: tradingViewId,
+            last_trade: {
+                tradingViewId,
+                direction,
+                sl,
+                tp,
+                entry: document.getElementById("entry").value.trim()
+            }
         });
 
         const [tab] = await chrome.tabs.query({
@@ -135,6 +279,21 @@ async function handleTrade(actionType) {
     }
 }
 
+function loadLastTrade() {
+    chrome.storage.local.get(["last_trade"], (result) => {
+
+        if (!result.last_trade) return;
+
+        const trade = result.last_trade;
+
+        document.getElementById("tradingViewId").value = trade.tradingViewId || "";
+        document.getElementById("direction").value = trade.direction || "buy";
+        document.getElementById("sl").value = trade.sl ?? "";
+        document.getElementById("tp").value = trade.tp ?? "";
+        document.getElementById("entry").value = trade.entry || "";
+    });
+}
+
 /* -----------------------------
    Button Events
 ----------------------------- */
@@ -146,3 +305,7 @@ document.getElementById("editTrade")
 
 document.getElementById("deleteTrade")
     .addEventListener("click", () => handleTrade("delete"));
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadTabDefaults("add");
+});
