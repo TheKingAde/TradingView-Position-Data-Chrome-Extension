@@ -185,9 +185,12 @@ async function handleTrade(actionType) {
             throw new Error("Take profit must be positive");
         
         let tradeId;
+
         if (actionType === "add") {
+
             tradeId = generateTradeId();
-            chrome.storage.local.set({
+
+            await chrome.storage.local.set({
                 last_tv_id: tradingViewId,
                 last_trade: {
                     tradeId,
@@ -198,6 +201,16 @@ async function handleTrade(actionType) {
                     entry
                 }
             });
+
+        } else {
+
+            const result = await chrome.storage.local.get(["last_trade"]);
+
+            if (!result.last_trade || !result.last_trade.tradeId) {
+                throw new Error("No previous trade found to edit/delete");
+            }
+
+            tradeId = result.last_trade.tradeId;
         }
 
         const [tab] = await chrome.tabs.query({
@@ -257,7 +270,7 @@ async function handleTrade(actionType) {
                         "Entry Level: " + p.entry + "\n" +
                         "Stop Loss: " + p.stop_loss + "\n" +
                         "Take Profit: " + p.take_profit + "\n" +
-                        "Price: " + p.current_price + "\n" +
+                        "Current Price: " + p.current_price + "\n" +
                         "Timestamp: " + p.timestamp
                     );
 
