@@ -1,5 +1,6 @@
-injectForms();
-
+/* -----------------------------
+   Form Template
+----------------------------- */
 const formTemplate = `
 <div class="row">
     <div class="field">
@@ -35,132 +36,119 @@ const formTemplate = `
     </div>
 </div>
 `;
-/*
-<div class="row">
-    <div class="field">
-        <label>API URL</label>
-        <input type="text" id="url" placeholder="https://example.com/api" />
-    </div>
 
-    <div class="field">
-        <label>Request Type</label>
-        <select id="method">
-            <option value="POST">POST</option>
-            <option value="GET">GET</option>
-        </select>
-    </div>
-</div>
-*/
-
+/* -----------------------------
+   Inject Forms
+----------------------------- */
 function injectForms() {
     document.querySelectorAll(".form-fields").forEach(el => {
         el.innerHTML = formTemplate;
     });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-
-    chrome.storage.local.get(["last_tv_id"], (result) => {
-        if (result.last_tv_id) {
-            document.getElementById("tradingViewId").value = result.last_tv_id;
-        }
-    });
-
-});
-
-document.querySelectorAll(".form-fields").forEach(el => {
-    el.innerHTML = formTemplate;
-});
-
-document.querySelectorAll(".tab").forEach(button => {
-    button.addEventListener("click", () => {
-
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-
-        button.classList.add("active");
-        document.getElementById(button.dataset.tab).classList.add("active");
-
-        loadTabDefaults(button.dataset.tab);
-    });
-});
-
-const statusEl = document.getElementById("status");
-const debugEl = document.getElementById("debug");
-
 /* -----------------------------
-   Debug Logger
+   Tab Setup
 ----------------------------- */
-function logDebug(text) {
-    debugEl.textContent += text + "\n\n";
-    debugEl.scrollTop = debugEl.scrollHeight;
+function setupTabs() {
+    document.querySelectorAll(".tab").forEach(button => {
+        button.addEventListener("click", () => {
+
+            document.querySelectorAll(".tab")
+                .forEach(t => t.classList.remove("active"));
+
+            document.querySelectorAll(".tab-content")
+                .forEach(c => c.classList.remove("active"));
+
+            button.classList.add("active");
+            document.getElementById(button.dataset.tab)
+                .classList.add("active");
+
+            loadTabDefaults(button.dataset.tab);
+        });
+    });
 }
 
+/* -----------------------------
+   Load Tab Defaults
+----------------------------- */
 function loadTabDefaults(tabName) {
 
+    const tabContainer = document.getElementById(tabName);
+    const tradingViewId = tabContainer.querySelector("#tradingViewId");
+    const direction = tabContainer.querySelector("#direction");
+    const sl = tabContainer.querySelector("#sl");
+    const tp = tabContainer.querySelector("#tp");
+    const entry = tabContainer.querySelector("#entry");
+
     if (tabName === "add") {
+
         chrome.storage.local.get(["last_tv_id"], (result) => {
 
-            document.getElementById("tradingViewId").value =
-                result.last_tv_id || "";
-
-            document.getElementById("direction").value = "buy";
-            document.getElementById("sl").value = "";
-            document.getElementById("tp").value = "";
-            document.getElementById("entry").value = "";
+            tradingViewId.value = result.last_tv_id || "";
+            direction.value = "buy";
+            sl.value = "";
+            tp.value = "";
+            entry.value = "";
         });
     }
 
-    if (tabName === "edit" || tabName === "delete") {
+    else if (tabName === "edit" || tabName === "delete") {
+
         chrome.storage.local.get(["last_trade"], (result) => {
 
             if (!result.last_trade) return;
 
             const trade = result.last_trade;
 
-            document.getElementById("tradingViewId").value =
-                trade.tradingViewId || "";
-
-            document.getElementById("direction").value =
-                trade.direction || "buy";
-
-            document.getElementById("sl").value =
-                trade.sl ?? "";
-
-            document.getElementById("tp").value =
-                trade.tp ?? "";
-
-            document.getElementById("entry").value =
-                trade.entry || "";
+            tradingViewId.value = trade.tradingViewId || "";
+            direction.value = trade.direction || "buy";
+            sl.value = trade.sl ?? "";
+            tp.value = trade.tp ?? "";
+            entry.value = trade.entry || "";
         });
     }
 }
-
-document.addEventListener("DOMContentLoaded", async () => {
+/* -----------------------------
+   Load Symbol
+----------------------------- */
+function loadSymbol() {
 
     const symbolEl = document.getElementById("currentSymbol");
 
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
-    if (!tab) {
-        symbolEl.textContent = "No active tab";
-        return;
-    }
-
-    chrome.tabs.sendMessage(
-        tab.id,
-        { action: "getSymbol" },
-        (response) => {
-
-            if (chrome.runtime.lastError || !response || !response.success) {
-                symbolEl.textContent = "Symbol unavailable";
-                return;
-            }
-
-            symbolEl.textContent = `${response.symbol} (${response.exchange || ""})`;
+        if (!tabs[0]) {
+            symbolEl.textContent = "No active tab";
+            return;
         }
-    );
-});
+
+        chrome.tabs.sendMessage(
+            tabs[0].id,
+            { action: "getSymbol" },
+            (response) => {
+
+                if (chrome.runtime.lastError || !response || !response.success) {
+                    symbolEl.textContent = "Symbol unavailable";
+                    return;
+                }
+
+                symbolEl.textContent =
+                    `${response.symbol} (${response.exchange || ""})`;
+            }
+        );
+    });
+}
+
+/* -----------------------------
+   Debug + Status
+----------------------------- */
+const statusEl = document.getElementById("status");
+const debugEl = document.getElementById("debug");
+
+function logDebug(text) {
+    debugEl.textContent += text + "\n\n";
+    debugEl.scrollTop = debugEl.scrollHeight;
+}
 
 /* -----------------------------
    Trade Handler
@@ -176,35 +164,32 @@ async function handleTrade(actionType) {
         const direction = document.getElementById("direction").value;
         const sl = parseFloat(document.getElementById("sl").value);
         const tp = parseFloat(document.getElementById("tp").value);
+        const entry = document.getElementById("entry").value.trim();
+
         const url = "http://127.0.0.1:5000/trade";
         const method = "POST";
 
-        /* Validation */
         if (!tradingViewId)
             throw new Error("TradingView ID is required");
 
-        /*
-        if (!url)
-            throw new Error("API URL is required");
-        */
-       
-        if (sl < 0)
+        if (!isNaN(sl) && sl < 0)
             throw new Error("Stop loss must be positive");
 
-        if (tp < 0)
+        if (!isNaN(tp) && tp < 0)
             throw new Error("Take profit must be positive");
 
-        /* Save state */
-        chrome.storage.local.set({
-            last_tv_id: tradingViewId,
-            last_trade: {
-                tradingViewId,
-                direction,
-                sl,
-                tp,
-                entry: document.getElementById("entry").value.trim()
-            }
-        });
+        if (actionType === "add") {
+            chrome.storage.local.set({
+                last_tv_id: tradingViewId,
+                last_trade: {
+                    tradingViewId,
+                    direction,
+                    sl,
+                    tp,
+                    entry
+                }
+            });
+        }
 
         const [tab] = await chrome.tabs.query({
             active: true,
@@ -214,7 +199,6 @@ async function handleTrade(actionType) {
         if (!tab)
             throw new Error("No active tab found");
 
-        /* Send message to content script */
         chrome.tabs.sendMessage(
             tab.id,
             {
@@ -247,7 +231,6 @@ async function handleTrade(actionType) {
                     ? "Sent successfully"
                     : "Failed";
 
-                /* Human readable debug output */
                 if (response.server_response) {
 
                     const p = response.payload;
@@ -269,7 +252,6 @@ async function handleTrade(actionType) {
                     logDebug("Server Response: " +
                         (response.server_response || "No response data"));
                 }
-
             }
         );
 
@@ -277,21 +259,6 @@ async function handleTrade(actionType) {
         statusEl.innerText = "Error";
         logDebug("Error: " + err.message);
     }
-}
-
-function loadLastTrade() {
-    chrome.storage.local.get(["last_trade"], (result) => {
-
-        if (!result.last_trade) return;
-
-        const trade = result.last_trade;
-
-        document.getElementById("tradingViewId").value = trade.tradingViewId || "";
-        document.getElementById("direction").value = trade.direction || "buy";
-        document.getElementById("sl").value = trade.sl ?? "";
-        document.getElementById("tp").value = trade.tp ?? "";
-        document.getElementById("entry").value = trade.entry || "";
-    });
 }
 
 /* -----------------------------
@@ -306,6 +273,12 @@ document.getElementById("editTrade")
 document.getElementById("deleteTrade")
     .addEventListener("click", () => handleTrade("delete"));
 
+/* -----------------------------
+   Initialize
+----------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
+    injectForms();
+    setupTabs();
     loadTabDefaults("add");
+    loadSymbol();
 });
