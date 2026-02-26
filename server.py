@@ -30,7 +30,6 @@ def parse_decimal(value, field_name):
     except (InvalidOperation, ValueError):
         raise ValueError(f"Invalid value for {field_name}")
 
-
 @app.route("/trade", methods=["GET", "POST", "OPTIONS"])
 def receive_trade():
     try:
@@ -47,6 +46,8 @@ def receive_trade():
 
         # Required fields
         required_fields = [
+            "action",
+            "tradeId",
             "symbol",
             "direction",
             "current_price",
@@ -68,6 +69,11 @@ def receive_trade():
         take_profit = parse_decimal(data["take_profit"], "take_profit")
         current_price = parse_decimal(data["current_price"], "current_price")
 
+        # Entry is optional
+        entry = None
+        if data.get("entry"):
+            entry = parse_decimal(data["entry"], "entry")
+
         # Validate direction
         if data["direction"] not in ["buy", "sell"]:
             return jsonify({
@@ -75,11 +81,20 @@ def receive_trade():
                 "message": "Direction must be 'buy' or 'sell'"
             }), 400
 
+        # Validate action
+        if data["action"] not in ["add", "edit", "delete"]:
+            return jsonify({
+                "status": "error",
+                "message": "Action must be add, edit, or delete"
+            }), 400
+
         normalized_payload = {
-            "action": data.get("action"),
+            "action": data["action"],
+            "trade_id": str(data["tradeId"]),
             "tradingview_id": str(data["tradingview_id"]),
             "symbol": str(data["symbol"]),
             "exchange": data.get("exchange"),
+            "entry": entry,
             "direction": data["direction"],
             "stop_loss": stop_loss,
             "take_profit": take_profit,
@@ -89,7 +104,8 @@ def receive_trade():
         }
 
         print("\n===== TRADE RECEIVED (NORMALIZED) =====")
-        print(normalized_payload)
+        for k, v in normalized_payload.items():
+            print(f"{k}: {v}")
         print("=======================================\n")
 
         return jsonify({

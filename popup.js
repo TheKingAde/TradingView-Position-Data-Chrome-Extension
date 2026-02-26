@@ -37,6 +37,12 @@ const formTemplate = `
 </div>
 `;
 
+function generateTradeId() {
+    return "TvOB-" +
+        Date.now().toString(36) +
+        Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
 /* -----------------------------
    Inject Forms
 ----------------------------- */
@@ -177,11 +183,14 @@ async function handleTrade(actionType) {
 
         if (!isNaN(tp) && tp < 0)
             throw new Error("Take profit must be positive");
-
+        
+        let tradeId;
         if (actionType === "add") {
+            tradeId = generateTradeId();
             chrome.storage.local.set({
                 last_tv_id: tradingViewId,
                 last_trade: {
+                    tradeId,
                     tradingViewId,
                     direction,
                     sl,
@@ -205,8 +214,10 @@ async function handleTrade(actionType) {
                 action: "getPriceAndSend",
                 data: {
                     action: actionType,
+                    tradeId: tradeId,
                     tradingViewId,
                     direction,
+                    entry,
                     sl,
                     tp,
                     url,
@@ -238,10 +249,12 @@ async function handleTrade(actionType) {
                     logDebug(
                         "Sent successfully\n\n" +
                         "Action: " + p.action + "\n" +
+                        "Trade ID: " + p.tradeId + "\n" +
                         "TradingView ID: " + p.tradingview_id + "\n" +
                         "Symbol: " + p.symbol + "\n" +
                         "Exchange: " + p.exchange + "\n" +
                         "Direction: " + p.direction + "\n" +
+                        "Entry Level: " + p.entry + "\n" +
                         "Stop Loss: " + p.stop_loss + "\n" +
                         "Take Profit: " + p.take_profit + "\n" +
                         "Price: " + p.current_price + "\n" +
