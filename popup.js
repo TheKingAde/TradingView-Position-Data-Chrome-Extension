@@ -172,7 +172,7 @@ async function handleTrade(actionType) {
         const tp = parseFloat(document.getElementById("tp").value);
         const entry = document.getElementById("entry").value.trim();
 
-        const url = "http://127.0.0.1:5000/trade";
+        const url = "https://mockly.me/custom/tvo";
         const method = "POST";
 
         if (!tradingViewId)
@@ -250,12 +250,27 @@ async function handleTrade(actionType) {
                     logDebug("Error: No response from content script");
                     return;
                 }
+                logDebug("Raw response object:\n" + JSON.stringify(response, null, 2));
 
-                statusEl.innerText = response.success
+                let server = response.server_response;
+
+                if (typeof server === "string") {
+                    try { server = JSON.parse(server); } catch {}
+                }
+
+                logDebug("Server Response Parsed:\n" + JSON.stringify(server, null, 2));
+
+                const statusValue = server?.status?.toLowerCase();
+
+                const isSuccess =
+                    response.success &&
+                    (statusValue === "ok" || statusValue === "success");
+
+                statusEl.innerText = isSuccess
                     ? "Sent successfully"
                     : "Failed";
 
-                if (response.server_response) {
+                if (isSuccess) {
 
                     const p = response.payload;
 
@@ -271,12 +286,16 @@ async function handleTrade(actionType) {
                         "Stop Loss: " + p.stop_loss + "\n" +
                         "Take Profit: " + p.take_profit + "\n" +
                         "Current Price: " + p.current_price + "\n" +
-                        "Timestamp: " + p.timestamp
+                        "Timestamp: " + p.timestamp,
+
+                        response.server_response
                     );
 
                 } else {
-                    logDebug("Server Response: " +
-                        (response.server_response || "No response data"));
+                    logDebug(
+                        "Server Response:\n" +
+                        JSON.stringify(response.server_response, null, 2)
+                    );
                 }
             }
         );
