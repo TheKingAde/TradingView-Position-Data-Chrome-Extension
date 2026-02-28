@@ -18,7 +18,7 @@
   ],
 
   "host_permissions": [
-    "https://www.tradingview.com/*",
+    "https://*.tradingview.com/*",
     "<all_urls>"
   ],
 
@@ -34,7 +34,7 @@
 
   "content_scripts": [
     {
-      "matches": ["https://www.tradingview.com/*"],
+      "matches": ["https://*.tradingview.com/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
