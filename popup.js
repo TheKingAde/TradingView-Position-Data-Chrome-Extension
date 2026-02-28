@@ -32,7 +32,7 @@ const formTemplate = `
 <div class="row">
     <div class="field">
         <label>Entry Level</label>
-        <input type="number" id="entry"/>
+        <input type="number" id="entry" step="0.00001" />
     </div>
 </div>
 `;
@@ -172,7 +172,7 @@ async function handleTrade(actionType) {
         const tp = parseFloat(document.getElementById("tp").value);
         const entry = document.getElementById("entry").value.trim();
 
-        const url = "https://mockly.me/custom/tvo";
+        const url = "https://disciplinedminds.in/webhook/take-trade";
         const method = "POST";
 
         if (!tradingViewId)
