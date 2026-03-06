@@ -2,6 +2,22 @@ if (typeof chrome === "undefined" || !chrome.runtime) {
     console.log("Extension context not available");
 }
 
+function getToolbarSymbol() {
+    const button = document.querySelector("#header-toolbar-symbol-search");
+
+    if (!button) {
+        throw new Error("Header button not found");
+    }
+
+    const span = button.querySelector("span");
+
+    if (!span) {
+        throw new Error("Header text not found");
+    }
+
+    return span.innerText.trim();
+}
+
 /* =====================================================
    Instrument Reader (GLOBAL – used everywhere)
 ===================================================== */
@@ -134,10 +150,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             const instrument = getInstrumentData();
 
+            const header = getToolbarSymbol();
+
             const payload = {
                 action: action,
                 tradeId: tradeId,
                 tradingview_id: tradingViewId,
+                header: header,
                 symbol: instrument.symbol,
                 exchange: instrument.exchange,
                 entry: entry,
