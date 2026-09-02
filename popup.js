@@ -172,7 +172,7 @@ async function handleTrade(actionType) {
         const tp = parseFloat(document.getElementById("tp").value);
         const entry = document.getElementById("entry").value.trim();
 
-        const url = "https://disciplinedminds.in/webhook/take-trade";
+        const url = "your url";
         const method = "POST";
 
         if (!tradingViewId)
